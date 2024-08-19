@@ -3,7 +3,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 const PDFGenerator = async (formData) => {
   // Create a new PDF document
   const pdfDoc = await PDFDocument.create();
-  let page = pdfDoc.addPage([780, 1200]); // Increased height for more content
+  let page = pdfDoc.addPage([1000, 1200]); // Increased width to 1000 units
 
   const { date, firmName, partners, businessActivity, businessAddress, signatories } = formData;
 
@@ -16,7 +16,7 @@ const PDFGenerator = async (formData) => {
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   // Helper function to add text with wrapping
-  const addText = (text, x, y, fontSize = textFontSize, maxWidth = 680) => {
+  const addText = (text, x, y, fontSize = textFontSize, maxWidth = 950) => { // Adjusted maxWidth
     const words = text.split(' ');
     let line = '';
     let lineHeight = fontSize + 2;
@@ -41,12 +41,13 @@ const PDFGenerator = async (formData) => {
   addText(`Firm Name: ${firmName}`, 50, 1125, titleFontSize);
 
   // Add a heading for the partners table
-  addText('Partners Details:', 50, 1080, headerFontSize);
+  let tableY = 1080;
+  addText('Partners Details:', 50, tableY, headerFontSize);
 
   // Add partners details table
-  let tableY = 1050;
+  tableY -= 30; // Adjust table position from heading
   const rowHeight = 15;
-  const columnWidth = 95;
+  const columnWidth = 120; // Increased column width
 
   // Add table headers
   const headers = ['Name', 'Son/Daughter of', 'Aadhar Number', 'Initial Capital', 'Profit Share (%)', 'Salary', 'Address'];
@@ -55,7 +56,7 @@ const PDFGenerator = async (formData) => {
   });
 
   // Add rows
-  partners.forEach((partner, rowIndex) => {
+  partners.forEach((partner) => {
     tableY -= rowHeight;
     Object.values(partner).forEach((value, colIndex) => {
       tableY = addText(value.toString(), 50 + colIndex * columnWidth, tableY, textFontSize);
@@ -63,20 +64,23 @@ const PDFGenerator = async (formData) => {
   });
 
   // Add business activity description
-  tableY -= rowHeight;
-  tableY = addText('Business Activity Description:', 50, tableY - 20, headerFontSize);
-  tableY = addText(businessActivity, 50, tableY - 20, textFontSize);
+  tableY -= 30;
+  addText('Business Activity Description:', 50, tableY, headerFontSize);
+  tableY -= 20;
+  addText(businessActivity, 50, tableY, textFontSize);
 
   // Add business address
-  tableY -= 60;
-  tableY = addText('Business Address:', 50, tableY, headerFontSize);
-  tableY = addText(businessAddress, 50, tableY - 20, textFontSize);
+  tableY -= 30;
+  addText('Business Address:', 50, tableY, headerFontSize);
+  tableY -= 20;
+  addText(businessAddress, 50, tableY, textFontSize);
 
   // Add signatory details
-  tableY -= 60;
+  tableY -= 30;
   addText('Signatories:', 50, tableY, headerFontSize);
-  signatories.forEach((signatory, index) => {
-    tableY = addText(`- ${signatory}`, 50, tableY - 20, textFontSize);
+  signatories.forEach((signatory) => {
+    tableY -= 20;
+    addText(`- ${signatory}`, 50, tableY, textFontSize);
   });
 
   // Serialize the PDF to bytes
@@ -92,6 +96,7 @@ const PDFGenerator = async (formData) => {
 };
 
 export default PDFGenerator;
+
 
 
 

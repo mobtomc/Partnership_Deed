@@ -51,7 +51,7 @@ const Form = () => {
   const fetchSearchResults = async (query = '') => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/searchPartnershipDeeds?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`https://partnership-deed.onrender.com/api/searchPartnershipDeeds?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -180,7 +180,7 @@ const handleNumberOfPartnersChange = (e) => {
 
   const handleSubmitToAPI = async () => {
     try {
-        const response = await fetch('http://localhost:8080/api/partnership-deed', {
+        const response = await fetch('https://partnership-deed.onrender.com/api/partnership-deed', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -218,7 +218,7 @@ const handleNumberOfPartnersChange = (e) => {
     console.log('Selected option:', selectedOption); // Log the selected option
     if (selectedOption) {
         try {
-            const response = await fetch(`http://localhost:8080/api/partnership-deed/${selectedOption.value}`);
+            const response = await fetch(`https://partnership-deed.onrender.com/api/partnership-deed/${selectedOption.value}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }

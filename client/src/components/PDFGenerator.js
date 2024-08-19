@@ -16,7 +16,7 @@ const PDFGenerator = async (formData) => {
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   // Helper function to add text with wrapping
-  const addText = (text, x, y, fontSize = textFontSize, maxWidth = 950) => { // Adjusted maxWidth
+  const addText = (text, x, y, fontSize = textFontSize, maxWidth = 950) => {
     const words = text.split(' ');
     let line = '';
     let lineHeight = fontSize + 2;
@@ -58,7 +58,9 @@ const PDFGenerator = async (formData) => {
   // Add rows
   partners.forEach((partner) => {
     tableY -= rowHeight;
-    Object.values(partner).forEach((value, colIndex) => {
+    // Assuming the partner object might have an unwanted property like '_id'
+    const { _id, ...partnerDetails } = partner; // Destructure and exclude _id
+    Object.values(partnerDetails).forEach((value, colIndex) => {
       tableY = addText(value.toString(), 50 + colIndex * columnWidth, tableY, textFontSize);
     });
   });
@@ -96,6 +98,7 @@ const PDFGenerator = async (formData) => {
 };
 
 export default PDFGenerator;
+
 
 
 

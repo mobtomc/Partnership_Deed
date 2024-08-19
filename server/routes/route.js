@@ -1,17 +1,16 @@
-const routes=require('express').Router();
-const controller=require('../controller/controller');
+const routes = require('express').Router();
+const controller = require('../controller/controller');
 
-
+// Route to create or update a partnership deed
 routes.route('/api/partnership-deed')
-    .post(controller.createPartnershipDeed)
+    .post(controller.createOrUpdatePartnershipDeed);
 
-    //search
-
+// Route to search for partnership deeds
 routes.route('/api/searchPartnershipDeeds')
-    .get(controller.searchPartnershipDeeds)
+    .get(controller.searchPartnershipDeeds);
 
-//id
+// Route to get a partnership deed by ID
 routes.route('/api/partnership-deed/:id')
-    .get(controller.getPartnershipDeedById)
+    .get(controller.getPartnershipDeedById);
 
-module.exports=routes
+module.exports = routes;

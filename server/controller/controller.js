@@ -1,42 +1,65 @@
 const { PartnershipDeed } = require('../models/model');
 
-async function createPartnershipDeed(req, res) {
+// Helper function to check if firm exists
+async function firmExists(firmName) {
+    const firm = await PartnershipDeed.findOne({ firmName });
+    return firm !== null;
+}
+
+async function createOrUpdatePartnershipDeed(req, res) {
     try {
         const { date, firmName, numberOfPartners, partners, businessActivity, businessAddress, numberOfSignatories, signatories } = req.body;
 
-        const newPartnershipDeed = new PartnershipDeed({
-            date,
-            firmName,
-            numberOfPartners,
-            partners,
-            businessActivity,
-            businessAddress,
-            numberOfSignatories,
-            signatories
-        });
+        const exists = await firmExists(firmName);
 
-        await newPartnershipDeed.save();
-
-        res.status(201).json({ message: "Partnership deed saved successfully" });
+        if (exists) {
+            // Update existing firm
+            const updatedPartnershipDeed = await PartnershipDeed.findOneAndUpdate(
+                { firmName },
+                {
+                    date,
+                    numberOfPartners,
+                    partners,
+                    businessActivity,
+                    businessAddress,
+                    numberOfSignatories,
+                    signatories
+                },
+                { new: true } // Return the updated document
+            );
+            return res.status(200).json({ message: "Partnership deed updated successfully", data: updatedPartnershipDeed });
+        } else {
+            // Create new firm
+            const newPartnershipDeed = new PartnershipDeed({
+                date,
+                firmName,
+                numberOfPartners,
+                partners,
+                businessActivity,
+                businessAddress,
+                numberOfSignatories,
+                signatories
+            });
+            await newPartnershipDeed.save();
+            return res.status(201).json({ message: "Partnership deed saved successfully" });
+        }
     } catch (error) {
-        console.error("Error saving partnership deed:", error);
-        res.status(500).json({ message: "Failed to save partnership deed", error: error.message });
+        console.error("Error saving or updating partnership deed:", error);
+        res.status(500).json({ message: "Failed to save or update partnership deed", error: error.message });
     }
 }
 
+// Other functions remain unchanged
 async function searchPartnershipDeeds(req, res) {
     try {
         const { q } = req.query;
-
         let results;
 
         if (q) {
-            // If query is provided, perform a search with the query
             results = await PartnershipDeed.find({
                 firmName: { $regex: q, $options: 'i' }  // Case-insensitive search
             });
         } else {
-            // If no query is provided, return all records
             results = await PartnershipDeed.find({});
         }
 
@@ -46,7 +69,7 @@ async function searchPartnershipDeeds(req, res) {
         res.status(500).json({ message: "Failed to search partnership deeds", error: error.message });
     }
 }
-//id
+
 async function getPartnershipDeedById(req, res) {
     try {
         const { id } = req.params;
@@ -63,8 +86,9 @@ async function getPartnershipDeedById(req, res) {
         res.status(500).json({ message: "Failed to retrieve partnership deed", error: error.message });
     }
 }
+
 module.exports = {
-    createPartnershipDeed,
+    createOrUpdatePartnershipDeed,
     searchPartnershipDeeds,
     getPartnershipDeedById
 };

@@ -88,30 +88,35 @@ useEffect(() => {
     }));
   };
 
-  // Handler for partner field changes
-  const handlePartnerChange = (index, e) => {
-    const { name, value } = e.target;
-    const newPartners = [...formData.partners];
-    newPartners[index] = { ...newPartners[index], [name]: value };
+// Handler for partner field changes
+const handlePartnerChange = (index, e) => {
+  const { name, value } = e.target;
+  const newPartners = [...formData.partners];
+  newPartners[index] = { ...newPartners[index], [name]: value };
 
-    // Calculate partner salary based on profit sharing percentage
-    if (name === 'profitShare' || name === 'totalProfit') {
+  // Calculate partner salary based on profit sharing percentage
+  if (name === 'profitShare' || name === 'totalProfit') {
       const totalProfit = parseFloat(formData.totalProfit) || 0;
       newPartners.forEach(partner => {
-        partner.salary = (totalProfit * (partner.profitShare / 100)).toFixed(2);
+          partner.salary = (totalProfit * (partner.profitShare / 100)).toFixed(2);
       });
-    }
+  }
 
-    setFormData(prev => ({
+  // Update signatories when partner name changes
+  const newSignatories = newPartners.map(partner => partner.name);
+
+  setFormData(prev => ({
       ...prev,
-      partners: newPartners
-    }));
-  };
+      partners: newPartners,
+      signatories: newSignatories // Update the signatories field
+  }));
+};
+
 
   // Handler for number of partners change
-  const handleNumberOfPartnersChange = (e) => {
-    const newNumberOfPartners = parseInt(e.target.value, 10);
-    const newPartners = Array.from({ length: newNumberOfPartners }, (_, index) => ({
+const handleNumberOfPartnersChange = (e) => {
+  const newNumberOfPartners = parseInt(e.target.value, 10);
+  const newPartners = Array.from({ length: newNumberOfPartners }, (_, index) => ({
       name: '',
       sonOf: '',
       aadharNo: '',
@@ -119,14 +124,18 @@ useEffect(() => {
       profitShare: 0,
       salary: 0,
       address: ''
-    }));
+  }));
 
-    setFormData(prev => ({
+  // Update signatories based on the number of partners
+  const newSignatories = newPartners.map(partner => partner.name);
+
+  setFormData(prev => ({
       ...prev,
       numberOfPartners: newNumberOfPartners,
-      partners: newPartners
-    }));
-  };
+      partners: newPartners,
+      signatories: newSignatories // Update the signatories field
+  }));
+};
 
   // Handle form submission
   const handleSubmit = (e) => {
@@ -150,39 +159,41 @@ useEffect(() => {
   const handlePreviewData = () => {
     setShowTable(true);
   };
-  //submit to db
+
   const handleSubmitToAPI = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/partnership-deed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      // Check if the response content type is JSON
-      const contentType = response.headers.get('Content-Type');
-      if (contentType && contentType.includes('application/json')) {
-        const result = await response.json();
-        if (response.ok) {
-          console.log('API Response:', result);
-          alert('Partnership deed successfully saved!');
+        const response = await fetch('http://localhost:8080/api/partnership-deed', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+
+        // Check if the response content type is JSON
+        const contentType = response.headers.get('Content-Type');
+        if (contentType && contentType.includes('application/json')) {
+            const result = await response.json();
+            if (response.ok) {
+                console.log('API Response:', result);
+                alert('Partnership deed successfully saved or updated!');
+            } else {
+                console.error('API Error:', result);
+                alert('Failed to save or update partnership deed');
+            }
         } else {
-          console.error('API Error:', result);
-          alert('Failed to save partnership deed');
+            // Handle non-JSON response
+            const text = await response.text();
+            console.error('Unexpected response format:', text);
+            alert('Unexpected response format from server');
         }
-      } else {
-        // Handle non-JSON response
-        const text = await response.text();
-        console.error('Unexpected response format:', text);
-        alert('Unexpected response format from server');
-      }
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred while saving the partnership deed');
+        console.error('Error:', error);
+        alert('An error occurred while saving or updating the partnership deed');
     }
-  };
+};
+
+  
   // Handle selecting a partnership deed
 
   const handleSelectPartnershipDeed = async (selectedOption) => {
@@ -388,22 +399,30 @@ useEffect(() => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Select Signatories</label>
-          <Select
-            isMulti
-            options={partnerOptions}
-            onChange={handleSignatoriesChange}
-            className="basic-single"
-            classNamePrefix="select"
-            isDisabled={formData.signatories.length >= formData.numberOfSignatories}
-          />
-          <p className="text-sm text-gray-600 mt-1">
-            You can select up to {formData.numberOfSignatories} signatories.
-          </p>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Select Signatories</label>
+            <Select
+                isMulti
+                options={partnerOptions}
+                onChange={handleSignatoriesChange}
+                className="basic-single"
+                classNamePrefix="select"
+                value={partnerOptions.filter(option => formData.signatories.includes(option.value))}
+                isDisabled={formData.signatories.length >= formData.numberOfSignatories}
+            />
+            <p className="text-sm text-gray-600 mt-1">
+                You can select up to {formData.numberOfSignatories} signatories.
+            </p>
         </div>
         <div className="flex justify-center items-center gap-8">
             <button type="submit" className="bg-blue-500  text-white p-3 rounded-lg shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
               Generate PDF
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmitToAPI}
+              className="bg-red-500 ml-4 text-white p-3 rounded-lg shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              Save Data
             </button>
             <button
               type="button"
@@ -412,13 +431,7 @@ useEffect(() => {
             >
               Preview Data
             </button>
-            <button
-              type="button"
-              onClick={handleSubmitToAPI}
-              className="bg-red-500 ml-4 text-white p-3 rounded-lg shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              Save Partnership Deed
-            </button>
+            
         </div>
       </form>
 

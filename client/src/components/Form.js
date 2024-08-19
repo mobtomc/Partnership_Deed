@@ -87,55 +87,73 @@ useEffect(() => {
       [name]: value
     }));
   };
-
-// Handler for partner field changes
-const handlePartnerChange = (index, e) => {
-  const { name, value } = e.target;
-  const newPartners = [...formData.partners];
-  newPartners[index] = { ...newPartners[index], [name]: value };
-
-  // Calculate partner salary based on profit sharing percentage
-  if (name === 'profitShare' || name === 'totalProfit') {
-      const totalProfit = parseFloat(formData.totalProfit) || 0;
-      newPartners.forEach(partner => {
-          partner.salary = (totalProfit * (partner.profitShare / 100)).toFixed(2);
-      });
-  }
-
-  // Update signatories when partner name changes
-  const newSignatories = newPartners.map(partner => partner.name);
-
-  setFormData(prev => ({
-      ...prev,
-      partners: newPartners,
-      signatories: newSignatories // Update the signatories field
-  }));
-};
-
-
-  // Handler for number of partners change
+//here partner changes 
 const handleNumberOfPartnersChange = (e) => {
   const newNumberOfPartners = parseInt(e.target.value, 10);
-  const newPartners = Array.from({ length: newNumberOfPartners }, (_, index) => ({
-      name: '',
-      sonOf: '',
-      aadharNo: '',
-      capital: 0,
-      profitShare: 0,
-      salary: 0,
-      address: ''
-  }));
 
-  // Update signatories based on the number of partners
-  const newSignatories = newPartners.map(partner => partner.name);
+  // Ensure the new number of partners is valid
+  if (newNumberOfPartners < 0) return;
+
+  // Preserve existing data and manage the new partners list
+  const newPartners = [...formData.partners];
+  const currentNumberOfPartners = newPartners.length;
+
+  if (newNumberOfPartners > currentNumberOfPartners) {
+    // Add new partners with default values
+    for (let i = currentNumberOfPartners; i < newNumberOfPartners; i++) {
+      newPartners.push({
+        name: '',
+        sonOf: '',
+        aadharNo: '',
+        capital: 0,
+        profitShare: 0,
+        salary: 0,
+        address: ''
+      });
+    }
+  } else if (newNumberOfPartners < currentNumberOfPartners) {
+    // Remove excess partners while preserving existing data
+    newPartners.splice(newNumberOfPartners);
+  }
 
   setFormData(prev => ({
-      ...prev,
-      numberOfPartners: newNumberOfPartners,
-      partners: newPartners,
-      signatories: newSignatories // Update the signatories field
+    ...prev,
+    numberOfPartners: newNumberOfPartners,
+    partners: newPartners
   }));
 };
+//
+  const handlePartnerChange = (index, e) => {
+    const { name, value } = e.target;
+    const newPartners = [...formData.partners];
+  
+    // Update specific partner field
+    newPartners[index] = { ...newPartners[index], [name]: value };
+  
+    // Recalculate salary based on updated profitShare or totalProfit
+    if (name === 'profitShare' || name === 'totalProfit') {
+      const totalProfit = parseFloat(formData.totalProfit) || 0;
+      newPartners.forEach(partner => {
+        if (partner.profitShare) {
+          partner.salary = (totalProfit * (partner.profitShare / 100)).toFixed(2);
+        }
+      });
+    }
+  
+    // Update signatories list if needed
+    const newSignatories = newPartners.map(partner => partner.name);
+  
+    setFormData(prev => ({
+      ...prev,
+      partners: newPartners,
+      signatories: newSignatories
+    }));
+  };
+  
+  
+
+
+
 
   // Handle form submission
   const handleSubmit = (e) => {

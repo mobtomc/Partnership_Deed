@@ -20,6 +20,7 @@ const Form = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [removedPartners, setRemovedPartners] = useState([]);
 
   // Update partner options for signatories select
   useEffect(() => {
@@ -88,20 +89,24 @@ useEffect(() => {
     }));
   };
 //here partner changes 
+
 const handleNumberOfPartnersChange = (e) => {
   const newNumberOfPartners = parseInt(e.target.value, 10);
 
   // Ensure the new number of partners is valid
   if (newNumberOfPartners < 0) return;
 
-  // Preserve existing data and manage the new partners list
   const newPartners = [...formData.partners];
   const currentNumberOfPartners = newPartners.length;
 
   if (newNumberOfPartners > currentNumberOfPartners) {
-    // Add new partners with default values
+    // Restore removed partners if available
+    const restoredPartners = removedPartners.slice(0, newNumberOfPartners - currentNumberOfPartners);
+    setRemovedPartners(prev => prev.slice(newNumberOfPartners - currentNumberOfPartners));
+    
+    // Add new partners with default values if needed
     for (let i = currentNumberOfPartners; i < newNumberOfPartners; i++) {
-      newPartners.push({
+      newPartners.push(restoredPartners[i - currentNumberOfPartners] || {
         name: '',
         sonOf: '',
         aadharNo: '',
@@ -112,6 +117,10 @@ const handleNumberOfPartnersChange = (e) => {
       });
     }
   } else if (newNumberOfPartners < currentNumberOfPartners) {
+    // Store removed partners before slicing
+    const partnersToRemove = newPartners.slice(newNumberOfPartners);
+    setRemovedPartners(prev => [...partnersToRemove, ...prev]);
+
     // Remove excess partners while preserving existing data
     newPartners.splice(newNumberOfPartners);
   }
@@ -122,33 +131,35 @@ const handleNumberOfPartnersChange = (e) => {
     partners: newPartners
   }));
 };
-//
-  const handlePartnerChange = (index, e) => {
-    const { name, value } = e.target;
-    const newPartners = [...formData.partners];
-  
-    // Update specific partner field
-    newPartners[index] = { ...newPartners[index], [name]: value };
-  
-    // Recalculate salary based on updated profitShare or totalProfit
-    if (name === 'profitShare' || name === 'totalProfit') {
-      const totalProfit = parseFloat(formData.totalProfit) || 0;
-      newPartners.forEach(partner => {
-        if (partner.profitShare) {
-          partner.salary = (totalProfit * (partner.profitShare / 100)).toFixed(2);
-        }
-      });
-    }
-  
-    // Update signatories list if needed
-    const newSignatories = newPartners.map(partner => partner.name);
-  
-    setFormData(prev => ({
-      ...prev,
-      partners: newPartners,
-      signatories: newSignatories
-    }));
-  };
+
+// Partner data change handler remains the same
+const handlePartnerChange = (index, e) => {
+  const { name, value } = e.target;
+  const newPartners = [...formData.partners];
+
+  // Update specific partner field
+  newPartners[index] = { ...newPartners[index], [name]: value };
+
+  // Recalculate salary based on updated profitShare or totalProfit
+  if (name === 'profitShare' || name === 'totalProfit') {
+    const totalProfit = parseFloat(formData.totalProfit) || 0;
+    newPartners.forEach(partner => {
+      if (partner.profitShare) {
+        partner.salary = (totalProfit * (partner.profitShare / 100)).toFixed(2);
+      }
+    });
+  }
+
+  // Update signatories list if needed
+  const newSignatories = newPartners.map(partner => partner.name);
+
+  setFormData(prev => ({
+    ...prev,
+    partners: newPartners,
+    signatories: newSignatories
+  }));
+};
+
   
   
 
@@ -239,12 +250,12 @@ const handleNumberOfPartnersChange = (e) => {
 
 
   return (
-    <div className="container mx-auto p-6 bg-gray-100 min-h-screen ">    
+    <div className="container mx-auto p-6 bg-gray-100 min-h-screen  ">    
       <h1 className="text-3xl font-extrabold text-center text-blue-600 mb-6 hover:scale-125 transition delay-150 duration-300 ease-in-out">Partnership Deed</h1>  
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-2xl">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-2xl  ">
         <div className="mb-4">
         <div className="mb-4">
-        <label className="block text-gray-700 text-lg font-medium mb-2">Select Partnership Deed</label>
+        <label className="block text-gray-700 text-lg font-medium mb-2">Search Existing Partnership</label>
         <Select
             options={searchResults}
             isLoading={loading}
@@ -288,100 +299,94 @@ const handleNumberOfPartnersChange = (e) => {
             required
           />
         </div>
-        {/* <div className="mb-4">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Total Profit</label>
-          <input
-            type="number"
-            name="totalProfit"
-            value={formData.totalProfit}
-            onChange={handleInputChange}
-            className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div> */}
-        {formData.partners.map((partner, index) => (
-          <div key={index} className="border border-gray-300 p-6 mb-4 rounded-lg bg-gray-50 shadow-sm">
-            <h2 className="text-2xl font-semibold" text-gray-800 mb-4>Partner {index + 1}</h2>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={partner.name}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Son/Daughter of</label>
-              <input
-                type="text"
-                name="sonOf"
-                value={partner.sonOf}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Aadhar Number</label>
-              <input
-                type="text"
-                name="aadharNo"
-                value={partner.aadharNo}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Initial Capital Contribution</label>
-              <input
-                type="number"
-                name="capital"
-                value={partner.capital}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Profit Sharing Percentage</label>
-              <input
-                type="number"
-                name="profitShare"
-                value={partner.profitShare}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Salary</label>
-              <input
-                type="number"
-                name="salary"
-                value={partner.salary}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                required
-              />
-              </div>
-            <div className="mb-2">
-              <label className="block text-gray-700 text-lg font-medium mb-2">Residential Address</label>
-              <input
-                type="text"
-                name="address"
-                value={partner.address}
-                onChange={(e) => handlePartnerChange(index, e)}
-                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
+<div  className={`grid grid-cols-1 ${
+    formData.partners.length > 1 ? 'md:grid-cols-2' : ''
+  } gap-4`}>
+      {formData.partners.map((partner, index) => (
+        <div key={index} className="border border-gray-300 p-6 mb-4 rounded-lg bg-gray-50 shadow-sm">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Partner {index + 1}</h2>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={partner.name}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
           </div>
-        ))}
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Son/Daughter of</label>
+            <input
+              type="text"
+              name="sonOf"
+              value={partner.sonOf}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Aadhar Number</label>
+            <input
+              type="text"
+              name="aadharNo"
+              value={partner.aadharNo}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Initial Capital Contribution</label>
+            <input
+              type="number"
+              name="capital"
+              value={partner.capital}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Profit Sharing Percentage</label>
+            <input
+              type="number"
+              name="profitShare"
+              value={partner.profitShare}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Salary</label>
+            <input
+              type="number"
+              name="salary"
+              value={partner.salary}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="0"
+              required
+            />
+          </div>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-lg font-medium mb-2">Residential Address</label>
+            <input
+              type="text"
+              name="address"
+              value={partner.address}
+              onChange={(e) => handlePartnerChange(index, e)}
+              className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+
         <div className="mb-4">
           <label className="block text-gray-700 text-lg font-medium mb-2">Business Activity Description</label>
           <textarea
@@ -431,69 +436,77 @@ const handleNumberOfPartnersChange = (e) => {
                 You can select up to {formData.numberOfSignatories} signatories.
             </p>
         </div>
-        <div className="flex justify-center items-center gap-8">
-            <button type="submit" className="bg-blue-500  text-white p-3 rounded-lg shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              Generate PDF
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmitToAPI}
-              className="bg-red-500 ml-4 text-white p-3 rounded-lg shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              Save Data
-            </button>
-            <button
-              type="button"
-              onClick={handlePreviewData}
-              className="bg-green-500 ml-4  text-white p-3 rounded-lg shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Preview Data
-            </button>
-            
-        </div>
+        <div className="flex flex-col md:flex-row justify-center items-center md:gap-8 gap-6">
+        <button
+          type="submit"
+          className="bg-blue-500 text-white p-3 rounded-lg shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+        >
+          Generate PDF
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmitToAPI}
+          className="bg-red-500 text-white p-3 rounded-lg shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 w-full md:w-auto"
+        >
+          Save Data
+        </button>
+        <button
+          type="button"
+          onClick={handlePreviewData}
+          className="bg-green-500 text-white p-3 rounded-lg shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+        >
+          Preview Data
+        </button>
+      </div>
+
       </form>
 
       {showTable && (
-        <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Partners Data</h2>
-          {formData.partners.length > 0 ? (
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr>
-                  <th className="border border-gray-300 p-2"></th>
-                  {formData.partners.map((_, index) => (
-                    <th key={index} className="border px-4 py-2">Partner {index + 1}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {['name', 'sonOf', 'aadharNo', 'capital', 'profitShare', 'salary', 'address'].map(field => (
-                  <tr key={field}>
-                    <td className="border px-4 py-2 font-bold">
-                      {field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </td>
-                    {formData.partners.map((partner, index) => (
-                      <td
-                        key={index}
-                        className="border border-gray-300 p-2 font-semibold"
-                        style={{
-                          wordWrap: 'break-word',
-                          whiteSpace: 'normal', // Allow wrapping
-                          maxWidth: '200px', // Set a max width for the cell
-                        }}
-                      >
-                        {partner[field] || 'N/A'}
-                      </td>
-                    ))}
-                  </tr>
+  <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
+    <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">Partners Data</h2>
+    {formData.partners.length > 0 ? (
+      <div className="overflow-x-auto"> {/* Enable horizontal scrolling */}
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 p-2"></th>
+              {formData.partners.map((_, index) => (
+                <th key={index} className="border px-4 py-2 text-sm md:text-base"> {/* Responsive text size */}
+                  Partner {index + 1}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {['name', 'sonOf', 'aadharNo', 'capital', 'profitShare', 'salary', 'address'].map(field => (
+              <tr key={field}>
+                <td className="border px-4 py-2 font-bold text-sm md:text-base">
+                  {field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                </td>
+                {formData.partners.map((partner, index) => (
+                  <td
+                    key={index}
+                    className="border border-gray-300 p-2 font-semibold text-sm md:text-base"
+                    style={{
+                      wordWrap: 'break-word',
+                      whiteSpace: 'normal', // Allow wrapping
+                      maxWidth: '200px', // Set a max width for the cell
+                    }}
+                  >
+                    {partner[field] || 'N/A'}
+                  </td>
                 ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-gray-600">No partners data available.</p>
-          )}
-        </div>
-      )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p className="text-gray-600">No partners data available.</p>
+    )}
+  </div>
+)}
+
 
 
     </div>

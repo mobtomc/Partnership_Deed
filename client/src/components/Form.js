@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import PDFGenerator from './PDFGenerator';
+import '../App.css';
+
 
 const Form = () => {
   const [formData, setFormData] = useState({
@@ -250,9 +252,10 @@ const handlePartnerChange = (index, e) => {
 
 
   return (
-    <div className="container mx-auto p-6 bg-gray-100 min-h-screen  ">    
-      <h1 className="text-3xl font-extrabold text-center text-blue-600 mb-6 hover:scale-125 transition delay-150 duration-300 ease-in-out">Partnership Deed</h1>  
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-2xl  ">
+    <div className="container mx-auto p-6 bg-dimBlue min-h-screen  ">    
+      <h1 className="text-3xl  font-extrabold text-center bg-gradient-to-r from-teal-600 to-blue-950 bg-clip-text text-transparent mb-6 text-gradient-shadow  hover:scale-125 transition delay-150 duration-300 ease-in-out">
+  Partnership Deed</h1>  
+      <form onSubmit={handleSubmit} className="space-y-6 bg-dimWhite p-6 rounded-lg shadow-2xl  ">
         <div className="mb-4">
         <div className="mb-4">
         <label className="block text-gray-700 text-lg font-medium mb-2">Search Existing Partnership</label>
@@ -303,7 +306,7 @@ const handlePartnerChange = (index, e) => {
     formData.partners.length > 1 ? 'md:grid-cols-2' : ''
   } gap-4`}>
       {formData.partners.map((partner, index) => (
-        <div key={index} className="border border-gray-300 p-6 mb-4 rounded-lg bg-gray-50 shadow-sm">
+        <div key={index} className="border border-gray-300 p-6 mb-4 rounded-lg bg-dimBlue shadow-sm">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Partner {index + 1}</h2>
           <div className="mb-2">
             <label className="block text-gray-700 text-lg font-medium mb-2">Name</label>
@@ -439,21 +442,21 @@ const handlePartnerChange = (index, e) => {
         <div className="flex flex-col md:flex-row justify-center items-center md:gap-8 gap-6">
         <button
           type="submit"
-          className="bg-blue-500 text-white p-3 rounded-lg shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+          className="bg-gradient-to-r from-teal-400 to-blue-500 hover:from-pink-500 hover:to-orange-500 text-white p-3 rounded-lg shadow-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
         >
           Generate PDF
         </button>
         <button
           type="button"
           onClick={handleSubmitToAPI}
-          className="bg-red-500 text-white p-3 rounded-lg shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 w-full md:w-auto"
+          className="bg-gradient-to-r from-teal-400 to-blue-500 hover:from-pink-500 hover:to-orange-500 text-white p-3 rounded-lg shadow-lg  focus:outline-none focus:ring-2 focus:ring-red-500 w-full md:w-auto"
         >
           Save Data
         </button>
         <button
           type="button"
           onClick={handlePreviewData}
-          className="bg-green-500 text-white p-3 rounded-lg shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+          className="bg-gradient-to-r from-teal-400 to-blue-500 hover:from-pink-500 hover:to-orange-500 text-white p-3 rounded-lg shadow-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
         >
           Preview Data
         </button>

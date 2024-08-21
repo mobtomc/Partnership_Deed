@@ -3,7 +3,9 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 const PDFGenerator = async (formData) => {
   // Create a new PDF document
   const pdfDoc = await PDFDocument.create();
-  let page = pdfDoc.addPage([1000, 1200]); // Increased width to 1000 units
+  const pageWidth = 1000;
+  const pageHeight = 1200;
+  let page = pdfDoc.addPage([pageWidth, pageHeight]);
 
   const { date, firmName, partners, businessActivity, businessAddress, signatories } = formData;
 
@@ -15,8 +17,8 @@ const PDFGenerator = async (formData) => {
   // Embed the font
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  // Helper function to add text with wrapping
-  const addText = (text, x, y, fontSize = textFontSize, maxWidth = 950) => {
+  // Helper function to add text with wrapping and center alignment
+  const addTextCentered = (text, x, y, fontSize = textFontSize, maxWidth = 950) => {
     const words = text.split(' ');
     let line = '';
     let lineHeight = fontSize + 2;
@@ -25,64 +27,68 @@ const PDFGenerator = async (formData) => {
       let testLine = line + words[n] + ' ';
       let testLineWidth = font.widthOfTextAtSize(testLine, fontSize);
       if (testLineWidth > maxWidth && n > 0) {
-        page.drawText(line, { x, y: newY, size: fontSize, font, color: rgb(0, 0, 0) });
+        page.drawText(line, { x: x - (font.widthOfTextAtSize(line, fontSize) / 2), y: newY, size: fontSize, font, color: rgb(0, 0, 0) });
         line = words[n] + ' ';
         newY -= lineHeight;
       } else {
         line = testLine;
       }
     }
-    page.drawText(line, { x, y: newY, size: fontSize, font, color: rgb(0, 0, 0) });
+    page.drawText(line, { x: x - (font.widthOfTextAtSize(line, fontSize) / 2), y: newY, size: fontSize, font, color: rgb(0, 0, 0) });
     return newY;
   };
 
+  // Start content placement closer to the top
+  const marginTop = 100;
+  let currentY = pageHeight - marginTop;
+
   // Add the date and firm name
-  addText(`Date: ${date}`, 50, 1150, titleFontSize);
-  addText(`Firm Name: ${firmName}`, 50, 1125, titleFontSize);
+  currentY = addTextCentered(`Date: ${date}`, pageWidth / 2, currentY, titleFontSize);
+  currentY = addTextCentered(`Firm Name: ${firmName}`, pageWidth / 2, currentY - 30, titleFontSize);
 
   // Add a heading for the partners table
-  let tableY = 1080;
-  addText('Partners Details:', 50, tableY, headerFontSize);
+  currentY -= 60; // Adjust position for heading
+  currentY = addTextCentered('Partners Details:', pageWidth / 2, currentY, headerFontSize);
 
   // Add partners details table
-  tableY -= 30; // Adjust table position from heading
+  currentY -= 60; // Adjust table position from heading
   const rowHeight = 15;
-  const columnWidth = 120; // Increased column width
+  const columnWidth = 120;
 
   // Add table headers
   const headers = ['Name', 'Son/Daughter of', 'Aadhar Number', 'Initial Capital', 'Profit Share (%)', 'Salary', 'Address'];
   headers.forEach((header, i) => {
-    addText(header, 50 + i * columnWidth, tableY, textFontSize);
+    addTextCentered(header, pageWidth / 2 - (headers.length * columnWidth / 2) + i * columnWidth, currentY, textFontSize);
   });
 
   // Add rows
   partners.forEach((partner) => {
-    tableY -= rowHeight;
+    currentY -= rowHeight;
     // Assuming the partner object might have an unwanted property like '_id'
-    const { _id, ...partnerDetails } = partner; // Destructure and exclude _id
+    const { _id, ...partnerDetails } = partner;
     Object.values(partnerDetails).forEach((value, colIndex) => {
-      tableY = addText(value.toString(), 50 + colIndex * columnWidth, tableY, textFontSize);
+      addTextCentered(value.toString(), pageWidth / 2 - (headers.length * columnWidth / 2) + colIndex * columnWidth, currentY, textFontSize);
     });
   });
 
   // Add business activity description
-  tableY -= 30;
-  addText('Business Activity Description:', 50, tableY, headerFontSize);
-  tableY -= 20;
-  addText(businessActivity, 50, tableY, textFontSize);
+  currentY -= 60;
+  currentY = addTextCentered('Business Activity Description:', pageWidth / 2, currentY, headerFontSize);
+  currentY -= 30;
+  currentY = addTextCentered(businessActivity, pageWidth / 2, currentY, textFontSize);
 
   // Add business address
-  tableY -= 30;
-  addText('Business Address:', 50, tableY, headerFontSize);
-  tableY -= 20;
-  addText(businessAddress, 50, tableY, textFontSize);
+  currentY -= 60;
+  currentY = addTextCentered('Business Address:', pageWidth / 2, currentY, headerFontSize);
+  currentY -= 30;
+  currentY = addTextCentered(businessAddress, pageWidth / 2, currentY, textFontSize);
 
   // Add signatory details
-  tableY -= 30;
-  addText('Signatories:', 50, tableY, headerFontSize);
+  currentY -= 60;
+  currentY = addTextCentered('Signatories:', pageWidth / 2, currentY, headerFontSize);
   signatories.forEach((signatory) => {
-    tableY -= 20;
-    addText(`- ${signatory}`, 50, tableY, textFontSize);
+    currentY -= 30;
+    addTextCentered(`- ${signatory}`, pageWidth / 2, currentY, textFontSize);
   });
 
   // Serialize the PDF to bytes
@@ -98,8 +104,3 @@ const PDFGenerator = async (formData) => {
 };
 
 export default PDFGenerator;
-
-
-
-
-
